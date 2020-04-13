@@ -1470,8 +1470,8 @@ class _BlocksConversionTraverser(scratch.AbstractBlocksTraverser):
         self.arguments = None
         self._stack = []
         self._child_stack = []
-        from _converter_math import get_math_mapping
-        self._block_name_to_handler_map.update(get_math_mapping())
+        from bricks import brick_mappings
+        self._block_name_to_handler_map.update(brick_mappings)
 
     @property
     def stack(self):

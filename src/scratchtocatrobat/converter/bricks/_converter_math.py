@@ -1,4 +1,4 @@
-def get_math_mapping():
+def get_mapping():
     return {
         "10 ^": _convert_pow_of_10_block
     }
