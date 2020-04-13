@@ -1,8 +1,6 @@
-def get_mapping():
-    return {
-        "10 ^": _convert_pow_of_10_block
-    }
+from _converter_helper import register_handler
 
+@register_handler("10 ^")
 def _convert_pow_of_10_block(self):
     [value] = self.arguments
 

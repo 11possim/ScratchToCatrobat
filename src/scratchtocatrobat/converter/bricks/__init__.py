@@ -1,2 +1,2 @@
 import _converter_math
-brick_mappings = _converter_math.get_mapping()
+from _converter_helper import brick_mappings
