@@ -1470,6 +1470,8 @@ class _BlocksConversionTraverser(scratch.AbstractBlocksTraverser):
         self.arguments = None
         self._stack = []
         self._child_stack = []
+        from _converter_math import get_math_mapping
+        self._block_name_to_handler_map.update(get_math_mapping())
 
     @property
     def stack(self):
@@ -1533,8 +1535,12 @@ class _BlocksConversionTraverser(scratch.AbstractBlocksTraverser):
             self.CatrobatClass = _ScratchToCatrobat.catrobat_brick_class_for(block_name)
             handler_method_name = self._block_name_to_handler_map.get(block_name)
             try:
-                if handler_method_name is not None:
-                    converted_element = getattr(self, handler_method_name)()
+                if handler_method_name:
+                    #Condition + if branch can be discarded as soon as all members of _block_name_to_handler_map are functionpointers
+                    if isinstance(handler_method_name, basestring):
+                        converted_element = getattr(self, handler_method_name)()
+                    else:
+                        converted_element = handler_method_name(self)
                 else:
                     converted_element = self._regular_block_conversion()
                 converted_element = converted_element if isinstance(converted_element, list) else [converted_element]
@@ -1611,7 +1617,11 @@ class _BlocksConversionTraverser(scratch.AbstractBlocksTraverser):
         self.CatrobatClass = _ScratchToCatrobat.complete_mapping.get(block_name)
         handler_method_name = self._block_name_to_handler_map.get(block_name)
         if handler_method_name:
-            converted_element = getattr(self, handler_method_name)()
+            #Condition + if branch can be discarded as soon as all members of _block_name_to_handler_map are functionpointers
+            if isinstance(handler_method_name, basestring):
+                converted_element = getattr(self, handler_method_name)()
+            else:
+                converted_element = handler_method_name(self)
         else:
             converted_element = self._regular_block_conversion()
         self.arguments = preserved_args
@@ -1626,26 +1636,6 @@ class _BlocksConversionTraverser(scratch.AbstractBlocksTraverser):
         formula_element = catformula.FormulaElement(catElementType.BRACKET, None, None)
         formula_element.setRightChild(value)
         return formula_element
-
-    @_register_handler(_block_name_to_handler_map, "10 ^")
-    def _convert_pow_of_10_block(self):
-        [value] = self.arguments
-
-        # unfortunately 10^x and pow(x) functions are not yet available in Catroid
-        # but Catroid already supports exp(x) and ln(x) functions
-        # since 10^x == exp(x*ln(10)) we can use 3 math functions to achieve the correct result!
-
-        # ln(10)
-        ln_formula_elem = self._converted_helper_brick_or_formula_element([10], "ln")
-
-        # x*ln(10)     (where x:=value)
-        exponent_formula_elem = self._converted_helper_brick_or_formula_element([value, ln_formula_elem], "*")
-
-        # exp(x*ln(10))
-        result_formula_elem = self._converted_helper_brick_or_formula_element([exponent_formula_elem], "e^")
-
-        # round(exp(x*ln(10)))     (use round-function to get rid of rounding errors)
-        return self._converted_helper_brick_or_formula_element([result_formula_elem], "rounded")
 
     @_register_handler(_block_name_to_handler_map, "lineCountOfList:")
     def _convert_line_count_of_list_block(self):
